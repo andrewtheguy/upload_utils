@@ -55,13 +55,13 @@ class OneDriveUtils:
         if len(accounts) > 0:
             result = app.acquire_token_silent(scopes=self.scopes, account=accounts[0])
         if not result:
-            result = self.get_access_token_by_url()
+            result = self.get_access_token_headless_by_url_prompt()
         if "access_token" not in result:
             raise result.get("error_description")
         #print(result)
         return result["access_token"]
      
-    def get_access_token_by_url(self):
+    def get_access_token_headless_by_url_prompt(self):
         flow = self.app.initiate_auth_code_flow(
             scopes=self.scopes,
             redirect_uri="https://login.microsoftonline.com/common/oauth2/nativeclient"
