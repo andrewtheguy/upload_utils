@@ -1,3 +1,4 @@
+import logging
 import os
 import requests
 from msal import ConfidentialClientApplication,PublicClientApplication
@@ -5,6 +6,9 @@ from msal import ConfidentialClientApplication,PublicClientApplication
 from msal_extensions import FilePersistence
 from msal_extensions.token_cache import PersistedTokenCache
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
 class OneDriveUtils:
     
     def __init__(self,client_id):
@@ -58,7 +62,21 @@ class OneDriveUtils:
     def get_headers(self):
         return {"Authorization": "Bearer " + self.get_access_token()}
 
-    def upload(self,file_path,dest_path):
+    def upload(self,file_path,dest_path,skip_if_exists=False):
+        if(skip_if_exists and self.file_exists(dest_path)):
+            logger.info(f"File {dest_path} already exists, skipping upload")
+            return
+        
+        headers = self.get_headers()
+            
+        #handle empty file
+        if(os.path.getsize(file_path)==0):
+            response = requests.put(f"https://graph.microsoft.com/v1.0/me/drive/items/root:{dest_path}:/content",
+                                    headers=headers, data="")
+            #print(response.text)
+            response.raise_for_status()
+            return
+
         mutation='''
 {
 "@microsoft.graph.conflictBehavior": "fail",
@@ -68,7 +86,6 @@ class OneDriveUtils:
 }
     '''
         #print("access_token",access_token)
-        headers = self.get_headers()
         response = requests.post(f"https://graph.microsoft.com/v1.0/me/drive/items/root:{dest_path}:/createUploadSession",
                                 headers=headers, json={"query": mutation})
         #print(response.text)
@@ -96,6 +113,10 @@ class OneDriveUtils:
 
 
 if __name__ == "__main__":
+
     one_drive = OneDriveUtils(os.environ['ONEDRIVE_CLIENT_ID'])
-    print(one_drive.upload("test.log",'chafa.txt'))
+    print(one_drive.file_exists("/CHAFA.txt"))
+    print(one_drive.upload("empty_file.txt",'/empty_file.txt'))
+    print(one_drive.upload("README.md",'/chafa.txt'))
+    #print(one_drive.upload("README.md",'/chafa.txt',skip_if_exists=True))
     print(one_drive.file_exists("/differencefdsfdss2.txt"))
