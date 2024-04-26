@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "upload-utils"
+version = "0.1.0"
+description = ""
+authors = ["Andrew Chen <hello@andrewtheguy.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+msal = "^1.28.0"
+msal-extensions = "^1.1.0"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
