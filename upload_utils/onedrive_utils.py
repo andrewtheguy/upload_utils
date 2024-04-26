@@ -48,8 +48,6 @@ class OneDriveUtils:
         
 
     def get_access_token(self):
-        authority_url = "https://login.microsoftonline.com/consumers"  # Or your tenant-specific endpoint
-        scopes = ["https://graph.microsoft.com/.default"]
 
         app=self.app
         accounts = app.get_accounts()
@@ -70,11 +68,11 @@ class OneDriveUtils:
             )
 
         if "error" in flow:
-            print("go to this url and auth:",flow.get("error"))
+            raise ValueError(flow.get("error"))
         
-        print(flow.get("enter resulting auth_url:"))
+        print("go to this url to login:",flow["auth_uri"])
 
-        auth_response_url = input('auth_response url').rstrip('\n')
+        auth_response_url = input('enter resulting redirect_url: ').rstrip('\n')
         auth_response=dict(parse.parse_qsl(parse.urlsplit(auth_response_url).query))
         #print(auth_response)
 
