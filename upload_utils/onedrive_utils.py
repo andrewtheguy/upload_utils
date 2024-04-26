@@ -9,6 +9,8 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+from urllib import parse
+
 class OneDriveUtils:
     
     def __init__(self,client_id):
@@ -39,25 +41,45 @@ class OneDriveUtils:
         persistence = FilePersistence(cache_path)
         cache=PersistedTokenCache(persistence)
         self.cache=cache
-        #print(accounts[0])
-        #print(app.acquire_token_silent(scopes=scopes, account=accounts[0]))
-        #exit(1)
-     
+        authority_url = "https://login.microsoftonline.com/consumers"  # Or your tenant-specific endpoint
+        self.scopes = ["https://graph.microsoft.com/.default"]
+
+        self.app = PublicClientApplication(self.client_id, authority=authority_url, token_cache=self.cache)
+        
+
     def get_access_token(self):
         authority_url = "https://login.microsoftonline.com/consumers"  # Or your tenant-specific endpoint
         scopes = ["https://graph.microsoft.com/.default"]
 
-        app = PublicClientApplication(self.client_id, authority=authority_url, token_cache=self.cache)
+        app=self.app
         accounts = app.get_accounts()
         result = None
         if len(accounts) > 0:
-            result = app.acquire_token_silent(scopes=scopes, account=accounts[0])
+            result = app.acquire_token_silent(scopes=self.scopes, account=accounts[0])
         if not result:
-            result = app.acquire_token_interactive(scopes=scopes)
+            result = self.get_access_token_by_url()
         if "access_token" not in result:
             raise result.get("error_description")
         #print(result)
         return result["access_token"]
+     
+    def get_access_token_by_url(self):
+        flow = self.app.initiate_auth_code_flow(
+            scopes=self.scopes,
+            redirect_uri="https://login.microsoftonline.com/common/oauth2/nativeclient"
+            )
+
+        if "error" in flow:
+            print("go to this url and auth:",flow.get("error"))
+        
+        print(flow.get("enter resulting auth_url:"))
+
+        auth_response_url = input('auth_response url').rstrip('\n')
+        auth_response=dict(parse.parse_qsl(parse.urlsplit(auth_response_url).query))
+        #print(auth_response)
+
+        result = self.app.acquire_token_by_auth_code_flow(flow, auth_response)
+        return result
 
     def get_headers(self):
         return {"Authorization": "Bearer " + self.get_access_token()}
@@ -125,4 +147,5 @@ class OneDriveUtils:
 if __name__ == "__main__":
 
     one_drive = OneDriveUtils(os.environ['ONEDRIVE_CLIENT_ID'])
-    print(one_drive.test_connection())
+    one_drive.test_connection()
+    print("success")
