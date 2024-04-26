@@ -1,1 +1,1 @@
-import .onedrive_utils
+from .onedrive_utils import OneDriveUploader
