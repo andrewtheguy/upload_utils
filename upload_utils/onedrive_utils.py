@@ -31,8 +31,9 @@ class OneDriveUtils:
         scopes = ["Files.ReadWrite"]
 
         home = str(Path.home())
-        cache_path=os.path.join(home,".cache",f"onedrive_token_cache_{client_id}.json")
-        os.makedirs(os.path.join(home,".cache"),exist_ok=True)
+        secret_dir=os.path.join(home,".config","onedrive_utils_andrew")
+        os.makedirs(secret_dir,exist_ok=True)
+        cache_path=os.path.join(secret_dir,f"onedrive_token_cache_{client_id}.json")
         persistence = FilePersistence(cache_path)
         cache=PersistedTokenCache(persistence)
         app = PublicClientApplication(client_id, authority=authority_url, token_cache=cache)
