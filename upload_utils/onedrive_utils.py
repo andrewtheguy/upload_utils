@@ -10,9 +10,7 @@ class OneDriveUtils:
     def __init__(self,client_id):
         self.client_id = client_id
 
-        authority_url = "https://login.microsoftonline.com/consumers"  # Or your tenant-specific endpoint
-        scopes = ["https://graph.microsoft.com/.default"]
-
+  
 
 #client_id = settings.config['ONEDRIVE_CLIENT_ID']
 
@@ -36,11 +34,17 @@ class OneDriveUtils:
         cache_path=os.path.join(secret_dir,f"onedrive_token_cache_{client_id}.json")
         persistence = FilePersistence(cache_path)
         cache=PersistedTokenCache(persistence)
-        app = PublicClientApplication(client_id, authority=authority_url, token_cache=cache)
-        accounts = app.get_accounts()
+        self.cache=cache
         #print(accounts[0])
         #print(app.acquire_token_silent(scopes=scopes, account=accounts[0]))
         #exit(1)
+     
+    def get_access_token(self):
+        authority_url = "https://login.microsoftonline.com/consumers"  # Or your tenant-specific endpoint
+        scopes = ["https://graph.microsoft.com/.default"]
+
+        app = PublicClientApplication(self.client_id, authority=authority_url, token_cache=self.cache)
+        accounts = app.get_accounts()
         result = None
         if len(accounts) > 0:
             result = app.acquire_token_silent(scopes=scopes, account=accounts[0])
@@ -49,11 +53,10 @@ class OneDriveUtils:
         if "access_token" not in result:
             raise result.get("error_description")
         #print(result)
-        self.access_token=result["access_token"]
-
+        return result["access_token"]
 
     def get_headers(self):
-        return {"Authorization": "Bearer " + self.access_token}
+        return {"Authorization": "Bearer " + self.get_access_token()}
 
     def upload(self,file_path,dest_path):
         mutation='''
