@@ -109,14 +109,20 @@ class OneDriveUtils:
         response.raise_for_status()
         return True
             
+    def test_connection(self):
+
+        #print("access_token",access_token)
+        headers = self.get_headers()
+        response = requests.get(f"https://graph.microsoft.com/v1.0/me/drive/items/root",
+                                headers=headers)
+        resp=response.json()
+        logger.debug(resp)
+        response.raise_for_status()
+        
         
 
 
 if __name__ == "__main__":
 
     one_drive = OneDriveUtils(os.environ['ONEDRIVE_CLIENT_ID'])
-    print(one_drive.file_exists("/CHAFA.txt"))
-    print(one_drive.upload("empty_file.txt",'/empty_file.txt'))
-    print(one_drive.upload("README.md",'/chafa.txt'))
-    #print(one_drive.upload("README.md",'/chafa.txt',skip_if_exists=True))
-    print(one_drive.file_exists("/differencefdsfdss2.txt"))
+    print(one_drive.test_connection())
