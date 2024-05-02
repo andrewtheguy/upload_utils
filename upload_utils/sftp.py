@@ -1,4 +1,5 @@
 import paramiko
+import os
 
 def create_remote_sftp_dir_recursively(sftp_client, remote_dir):
     """
