@@ -48,9 +48,10 @@ class OneDriveUtils:
 
         self.app = PublicClientApplication(self.client_id, authority=authority_url, token_cache=self.cache)
         
-    def quote_path(self,path):
+    def prepare_path_for_remote(self,path):
         #print(path)
-        path = path.strip()  # Trim leading/trailing spaces, not doing it for individual file/folder names yet
+        #path = path.strip()  # Trim leading/trailing spaces, not doing it for individual file/folder names yet
+        path = path.lstrip('/')  # Remove leading '/'
 
         arr = path.split('/')
         """Replaces OneDrive reserved characters, trims leading/trailing spaces."""
@@ -107,42 +108,76 @@ class OneDriveUtils:
             
         #handle empty file
         if(os.path.getsize(file_path)==0):
-            #raise "chafa"
-            response = requests.put(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.quote_path(dest_path)}:/content",
-                                    headers=headers, data="")
-            #raise "chafa"
-            response.raise_for_status()
+            with requests.put(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.prepare_path_for_remote(dest_path)}:/content",
+                                    headers=headers, data="") as response:
+                response.raise_for_status()
             return
 
         body={
             "item": {
             "@microsoft.graph.conflictBehavior": "fail",
+            "fileSize": os.path.getsize(file_path),
             }
         }
     
         #print("access_token",access_token)
-        response = requests.post(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.quote_path(dest_path)}:/createUploadSession",
-                                headers=headers, json=body)
-        #print(response.text)
-        response.raise_for_status()
-        upload_url = response.json()["uploadUrl"]
+        with requests.post(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.prepare_path_for_remote(dest_path)}:/createUploadSession",
+                                headers=headers, json=body) as response:
+            #print(response.text)
+            response.raise_for_status()
+            upload_url = response.json()["uploadUrl"]
 
-        with open(file_path, 'rb') as f:
-            resp=requests.put(upload_url, data=f)
-            resp.raise_for_status()
+            with open(file_path, 'rb') as f:
+                total_file_size = os.path.getsize(file_path)
+                chunk_size = 327680
+                chunk_number = total_file_size//chunk_size
+                chunk_leftover = total_file_size - chunk_size * chunk_number
+                i = 0
+                while True:
+                    chunk_data = f.read(chunk_size)
+                    start_index = i*chunk_size
+                    end_index = start_index + chunk_size
+                    #If end of file, break
+                    if not chunk_data:
+                        break
+                    if i == chunk_number:
+                        end_index = start_index + chunk_leftover
+                    #Setting the header with the appropriate chunk data location in the file
+                    headers = {'Content-Length':'{}'.format(chunk_size),'Content-Range':'bytes {}-{}/{}'.format(start_index, end_index-1, total_file_size)}
+                    #Upload one chunk at a time
+                    chunk_data_upload = requests.put(upload_url, data=chunk_data, headers=headers)
+                    #print(chunk_data_upload)
+                    #print(chunk_data_upload.json())
+                    i = i + 1
+
+
+    def download(self,one_drive_path,download_file_path):
+
+        headers = self.get_headers()
+        
+        with requests.get(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.prepare_path_for_remote(one_drive_path)}:/content",
+                                headers=headers,stream=True) as r:
+            r.raise_for_status()
+            with open(download_file_path, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192): 
+                    # If you have chunk encoded response uncomment if
+                    # and set chunk_size parameter to None.
+                    #if chunk: 
+                    f.write(chunk)
+    
             
 
     def file_exists(self,dest_path):
 
         #print("access_token",access_token)
         headers = self.get_headers()
-        response = requests.get(f"https://graph.microsoft.com/v1.0/me/drive/root:/{self.quote_path(dest_path)}",
-                                headers=headers)
-        resp=response.json()
-        if resp.get("error") and resp["error"]["code"]=="itemNotFound":
-            return False
-        response.raise_for_status()
-        return True
+        with requests.get(f"https://graph.microsoft.com/v1.0/me/drive/root:/{self.prepare_path_for_remote(dest_path)}",
+                                headers=headers) as response:
+            resp=response.json()
+            if resp.get("error") and resp["error"]["code"]=="itemNotFound":
+                return False
+            response.raise_for_status()
+            return True
             
     def test_connection(self):
 
