@@ -110,6 +110,8 @@ class OneDriveUtils:
         if(os.path.getsize(file_path)==0):
             with requests.put(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.prepare_path_for_remote(dest_path)}:/content",
                                     headers=headers, data="") as response:
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(response.text)
                 response.raise_for_status()
             return
 
@@ -123,7 +125,8 @@ class OneDriveUtils:
         #print("access_token",access_token)
         with requests.post(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.prepare_path_for_remote(dest_path)}:/createUploadSession",
                                 headers=headers, json=body) as response:
-            logger.debug(response.text)
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(response.text)
             response.raise_for_status()
             upload_url = response.json()["uploadUrl"]
 
@@ -146,6 +149,8 @@ class OneDriveUtils:
                     headers = {'Content-Length':'{}'.format(chunk_size),'Content-Range':'bytes {}-{}/{}'.format(start_index, end_index-1, total_file_size)}
                     #Upload one chunk at a time
                     chunk_data_upload = requests.put(upload_url, data=chunk_data, headers=headers)
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug(response.text)
                     chunk_data_upload.raise_for_status()
                     #print(chunk_data_upload)
                     #print(chunk_data_upload.json())
@@ -158,6 +163,8 @@ class OneDriveUtils:
         
         with requests.get(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.prepare_path_for_remote(one_drive_path)}:/content",
                                 headers=headers,stream=True) as r:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(r.text)
             r.raise_for_status()
             with open(download_file_path, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=8192): 
@@ -177,6 +184,8 @@ class OneDriveUtils:
             resp=response.json()
             if resp.get("error") and resp["error"]["code"]=="itemNotFound":
                 return False
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(response.text)
             response.raise_for_status()
             return True
             
@@ -187,7 +196,8 @@ class OneDriveUtils:
         response = requests.get(f"https://graph.microsoft.com/v1.0/me/drive/items/root",
                                 headers=headers)
         resp=response.json()
-        logger.debug(resp)
+        if logger.isEnabledFor(logging.DEBUG):    
+            logger.debug(resp)
         response.raise_for_status()
         
         
