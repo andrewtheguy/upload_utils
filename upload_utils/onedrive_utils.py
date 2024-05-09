@@ -146,6 +146,7 @@ class OneDriveUtils:
                     headers = {'Content-Length':'{}'.format(chunk_size),'Content-Range':'bytes {}-{}/{}'.format(start_index, end_index-1, total_file_size)}
                     #Upload one chunk at a time
                     chunk_data_upload = requests.put(upload_url, data=chunk_data, headers=headers)
+                    chunk_data_upload.raise_for_status()
                     #print(chunk_data_upload)
                     #print(chunk_data_upload.json())
                     i = i + 1
