@@ -1,5 +1,7 @@
 import logging
 import os
+import re
+import sys
 import requests
 from msal import ConfidentialClientApplication,PublicClientApplication
 #import settings
@@ -46,6 +48,20 @@ class OneDriveUtils:
 
         self.app = PublicClientApplication(self.client_id, authority=authority_url, token_cache=self.cache)
         
+    def quote_path(self,path):
+        #print(path)
+        path = path.strip()  # Trim leading/trailing spaces, not doing it for individual file/folder names yet
+
+        arr = path.split('/')
+        """Replaces OneDrive reserved characters, trims leading/trailing spaces."""
+        # Define OneDrive reserved characters
+        reserved_characters = '"*:<>?\\|'
+        
+        # Replace each reserved character with '_'
+        for char in reserved_characters:
+            path = path.replace(char, '_')
+        #print(path)
+        return parse.quote(path)
 
     def get_access_token(self):
 
@@ -70,7 +86,7 @@ class OneDriveUtils:
         if "error" in flow:
             raise ValueError(flow.get("error"))
         
-        print("go to this url to login:",flow["auth_uri"])
+        print("go to this url to login:",flow["auth_uri"],file=sys.stderr)
 
         auth_response_url = input('enter resulting redirect_url: ').rstrip('\n')
         auth_response=dict(parse.parse_qsl(parse.urlsplit(auth_response_url).query))
@@ -91,23 +107,22 @@ class OneDriveUtils:
             
         #handle empty file
         if(os.path.getsize(file_path)==0):
-            response = requests.put(f"https://graph.microsoft.com/v1.0/me/drive/items/root:{dest_path}:/content",
+            #raise "chafa"
+            response = requests.put(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.quote_path(dest_path)}:/content",
                                     headers=headers, data="")
             #print(response.text)
             response.raise_for_status()
             return
 
-        mutation='''
-{
-"@microsoft.graph.conflictBehavior": "fail",
-"description": "description",
-"driveItemSource": { "@odata.type": "microsoft.graph.driveItemSource" },
-"mediaSource": { "@odata.type": "microsoft.graph.mediaSource" }
-}
-    '''
+        body={
+            "item": {
+            "@microsoft.graph.conflictBehavior": "fail",
+            }
+        }
+    
         #print("access_token",access_token)
-        response = requests.post(f"https://graph.microsoft.com/v1.0/me/drive/items/root:{dest_path}:/createUploadSession",
-                                headers=headers, json={"query": mutation})
+        response = requests.post(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.quote_path(dest_path)}:/createUploadSession",
+                                headers=headers, json=body)
         #print(response.text)
         response.raise_for_status()
         upload_url = response.json()["uploadUrl"]
@@ -121,7 +136,7 @@ class OneDriveUtils:
 
         #print("access_token",access_token)
         headers = self.get_headers()
-        response = requests.get(f"https://graph.microsoft.com/v1.0/me/drive/items/root:{dest_path}",
+        response = requests.get(f"https://graph.microsoft.com/v1.0/me/drive/items/root:{self.quote_path(dest_path)}",
                                 headers=headers)
         resp=response.json()
         if resp.get("error") and resp["error"]["code"]=="itemNotFound":
