@@ -25,7 +25,7 @@ class TestUploadOneDrive(unittest.TestCase):
 
 
     def test_upload(self):
-        upload_file = os.path.join(self.tmpdirname,secrets.token_hex(16) + ".txt")
+        upload_file = os.path.join(self.tmpdirname,secrets.token_hex(16) + ",#&~test.txt")
         dest_path = '/'.join([self.destdirname,os.path.basename(upload_file)])    
         self.assertEqual(self.one_drive.file_exists(dest_path), False)
         file_content = ''.join(random.choices(string.ascii_letters + string.digits, k=20))

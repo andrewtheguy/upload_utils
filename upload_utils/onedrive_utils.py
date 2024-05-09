@@ -56,7 +56,7 @@ class OneDriveUtils:
         arr = path.split('/')
         """Replaces OneDrive reserved characters, trims leading/trailing spaces."""
         # Define OneDrive reserved characters
-        reserved_characters = ',#&~"*:<>?\\|'
+        reserved_characters = '"*:<>?\\|'
         
         # Replace each reserved character with '_'
         for char in reserved_characters:
