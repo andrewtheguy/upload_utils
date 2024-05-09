@@ -99,7 +99,36 @@ class TestUploadOneDrive(unittest.TestCase):
 
         self.assertEqual(file_content,download_dest_file_file_content)
         self.assertNotEqual(file_content2,download_dest_file_file_content)
+
+
+
+    def test_override_exists(self):
+        upload_file = os.path.join(self.tmpdirname,secrets.token_hex(16) + ".txt")
+        dest_path = '/'.join([self.destdirname,os.path.basename(upload_file)])    
+        self.assertEqual(self.one_drive.file_exists(dest_path), False)
+        file_content = ''.join(random.choices(string.ascii_letters + string.digits, k=16*1024*2))
+        with open(upload_file, 'w') as f:
+            f.write(file_content)
+        self.one_drive.upload(upload_file,dest_path,skip_if_exists=False)
+        self.assertEqual(self.one_drive.file_exists(dest_path), True)
+
+        file_content2 = ''.join(random.choices(string.ascii_letters + string.digits, k=16*1024+3))
+
+        self.assertNotEqual(file_content,file_content2)
         
+        with open(upload_file, 'w') as f:
+            f.write(file_content2)
+        self.one_drive.upload(upload_file,dest_path,skip_if_exists=False)
+        self.assertEqual(self.one_drive.file_exists(dest_path), True)
+
+        download_dest_file = os.path.join(self.tmpdirname,secrets.token_hex(16) + "_download.txt")
+        self.one_drive.download(dest_path,download_dest_file)
+        with open(download_dest_file, 'r') as f:
+            download_dest_file_file_content = f.read()
+
+        self.assertEqual(file_content2,download_dest_file_file_content)
+        self.assertNotEqual(file_content,download_dest_file_file_content)
+                
 
 if __name__ == '__main__':
     unittest.main()

@@ -115,7 +115,7 @@ class OneDriveUtils:
 
         body={
             "item": {
-            "@microsoft.graph.conflictBehavior": "fail",
+            "@microsoft.graph.conflictBehavior": "replace",
             "fileSize": os.path.getsize(file_path),
             }
         }
