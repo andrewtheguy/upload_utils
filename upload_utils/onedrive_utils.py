@@ -110,7 +110,7 @@ class OneDriveUtils:
             #raise "chafa"
             response = requests.put(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.quote_path(dest_path)}:/content",
                                     headers=headers, data="")
-            #print(response.text)
+            #raise "chafa"
             response.raise_for_status()
             return
 
@@ -136,7 +136,7 @@ class OneDriveUtils:
 
         #print("access_token",access_token)
         headers = self.get_headers()
-        response = requests.get(f"https://graph.microsoft.com/v1.0/me/drive/items/root:{self.quote_path(dest_path)}",
+        response = requests.get(f"https://graph.microsoft.com/v1.0/me/drive/root:/{self.quote_path(dest_path)}",
                                 headers=headers)
         resp=response.json()
         if resp.get("error") and resp["error"]["code"]=="itemNotFound":

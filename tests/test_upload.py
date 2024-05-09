@@ -16,9 +16,14 @@ class TestUploadOneDrive(unittest.TestCase):
         self.one_drive.test_connection()
 
     def test_upload(self):
-        self.one_drive.upload(self.upload_file,self.upload_file,skip_if_exists=False)
-        self.one_drive.upload(self.upload_file,self.upload_empty_file,skip_if_exists=False)
-        self.assertEqual(True, True)
+        self.assertEqual(self.one_drive.file_exists('hfghfghfghfghfg/hfghjfjfghjf.txt'), False)
+        #self.assertEqual(self.one_drive.file_exists('/hfghfghfghfghfg/hfghjfjfghjf.txt'), False)
+        self.assertEqual(self.one_drive.file_exists(self.upload_file), True)
+        self.one_drive.upload(self.upload_file,self.upload_file,skip_if_exists=True)
+        self.assertEqual(self.one_drive.file_exists(self.upload_file), True)
+        self.one_drive.upload(self.upload_empty_file,self.upload_empty_file,skip_if_exists=False)
+        self.assertEqual(self.one_drive.file_exists(self.upload_empty_file), True)
+        
 
 if __name__ == '__main__':
     unittest.main()
