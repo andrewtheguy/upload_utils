@@ -74,7 +74,7 @@ class TestUploadOneDrive(unittest.TestCase):
 
 
     def test_no_override_exists(self):
-        upload_file = os.path.join(self.tmpdirname,secrets.token_hex(16) + ".txt")
+        upload_file = os.path.join(self.tmpdirname,secrets.token_hex(16) + ",#&~.txt")
         dest_path = '/'.join([self.destdirname,os.path.basename(upload_file)])    
         self.assertEqual(self.one_drive.file_exists(dest_path), False)
         file_content = ''.join(random.choices(string.ascii_letters + string.digits, k=16*1024+2))
@@ -97,6 +97,7 @@ class TestUploadOneDrive(unittest.TestCase):
         with open(download_dest_file, 'r') as f:
             download_dest_file_file_content = f.read()
 
+        # make sure it didn't override
         self.assertEqual(file_content,download_dest_file_file_content)
         self.assertNotEqual(file_content2,download_dest_file_file_content)
 
