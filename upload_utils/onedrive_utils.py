@@ -123,7 +123,7 @@ class OneDriveUtils:
         #print("access_token",access_token)
         with requests.post(f"https://graph.microsoft.com/v1.0/me/drive/items/root:/{self.prepare_path_for_remote(dest_path)}:/createUploadSession",
                                 headers=headers, json=body) as response:
-            #print(response.text)
+            logger.debug(response.text)
             response.raise_for_status()
             upload_url = response.json()["uploadUrl"]
 
